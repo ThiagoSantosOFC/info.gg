@@ -1,21 +1,25 @@
 const express = require("express");
 const { json } = require("express");
+require("dotenv").config();
+
 const axios = require("axios");
 const cors = require("cors");
-require("dotenv").config();
+
 
 const app = express();
 
 app.use(json());
-app.listen(3333);
+app.use(cors());
+app.listen(process.env.PORT || 3333);
 
-app.get("/", async (req, res) => {
-  res.send("Hello World");
-});
+app.get('/', async(req, res) => {
+  res.json({
+    message: 'hello world'
+  })
+})
 
-app.get("/summoner:/summonerName", async (req, res) => {
+app.get("/summoner/:summonerName", async (req, res) => {
   const { summonerName } = req.params;
-
   const summonerIdResponse = await axios
     .get(
       `${process.env.LOL_URL}/lol/summoner/v4/summoners/by-name/${encodeURI(
@@ -26,10 +30,8 @@ app.get("/summoner:/summonerName", async (req, res) => {
     .catch((e) => {
       return res.status(e.response.status).json(e.response.data);
     });
-    return res.json(summonerIdResponse.data);
-});
 
-const { id, profileIconId, summonerLevel } = summonerIdResponse.data;
+  const { id, profileIconId, summonerLevel } = summonerIdResponse.data;
 
   const responseRanked = await axios
     .get(`${process.env.LOL_URL}/lol/league/v4/entries/by-summoner/${id}`, {
@@ -53,3 +55,4 @@ const { id, profileIconId, summonerLevel } = summonerIdResponse.data;
     queueType,
     winRate: ((wins / (wins + losses)) * 100).toFixed(1),
   });
+});
